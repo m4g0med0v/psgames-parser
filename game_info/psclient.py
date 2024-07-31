@@ -13,12 +13,46 @@ class URLError(Exception):
 
 class PSClient:
     def __init__(self, href: str, id: str = None) -> None:
+        """
+            Класс PSClient для получения и парсинга данных о играх из магазина PlayStation.
+
+            Аргументы:
+            - href (str): URL страницы игры в магазине PlayStation.
+            - id (str, опционально): ID игры (по умолчанию None).
+
+            Атрибуты:
+            - href (str): URL страницы игры в магазине PlayStation.
+            - id (str): ID игры.
+            - soup: Спарсенный HTML контент страницы игры.
+            - product_id: Кортеж, представляющий тип и ID продукта/концепции.
+
+            Методы:
+            - __define_product_id(data): Определяет и возвращает тип и ID продукта или концепции игры.
+            - __get_image(): Получает изображения, связанные с игрой.
+            - __get_title(): Получает информацию о названии, включая имя, издателя, дату выпуска и т.д.
+            - __get_price(): Получает информацию о цене игры.
+            - __get_content_rating(): Получает данные о возрастном рейтинге, включая дескрипторы и интерактивные элементы.
+            - __get_info(): Получает дополнительную информацию, такую как жанры, языки и описания.
+            - __load(): Загружает и инициализирует данные из предоставленного URL страницы игры.
+            - data(): Получает все необходимые данные и возвращает их в виде объекта Game.
+        """
+
         self.href = href
         self.id = id
         self.soup = None
         self.product_id = None
 
     def __define_product_id(self, data) -> str:
+        """
+            Определяет и возвращает тип и ID продукта или концепции игры на основе входных данных.
+
+            Аргументы:
+            - data: Входные данные, содержащие соответствующую информацию об игре.
+
+            Возвращает:
+            - Кортеж: Тип ("product" или "concept") и ID игрового объекта.
+        """
+
         if data["args"].get("productId"):
             product_id = data["args"]["productId"]
             return ("product", f"Product:{product_id}")
@@ -30,12 +64,26 @@ class PSClient:
                 return ("concept", f"Concept:{concept_id}")
 
     def __get_image(self) -> List[Tuple]:
+        """
+            Получает изображения, связанные с игрой.
+
+            Возвращает:
+            - List[Tuple]: Список кортежей, содержащих роль изображения и URL.
+        """
+
         image_data = find_script("gameBackgroundImage", self.soup)
         image = [(item["role"], item["url"]) for item in image_data["cache"][self.product_id[1]]["media"]]
 
         return image
 
     def __get_title(self) -> Dict[str, Any]:
+        """
+            Получает информацию о названии, включая имя, издателя, дату выпуска и т.д.
+
+            Возвращает:
+            - Dict[str, Any]: Словарь, содержащий детали названия.
+        """
+
         title_data = find_script("gameTitle", self.soup)
         if self.product_id[0] == "product":
             title_product = title_data["cache"][self.product_id[1]]
@@ -62,6 +110,13 @@ class PSClient:
         return title
 
     def __get_price(self) -> List:
+        """
+            Получает информацию о цене игры.
+
+            Возвращает:
+            - List: Список деталей о ценах.
+        """
+
         price_data = find_script("ctaWithPrice", self.soup)
         price = []
         if self.product_id[0] == "product":
@@ -83,6 +138,13 @@ class PSClient:
         return price
 
     def __get_content_rating(self) -> Dict[str, Any]:
+        """
+            Получает данные о возрастном рейтинге, включая дескрипторы и интерактивные элементы.
+
+            Возвращает:
+            - Dict[str, Any]: Словарь, содержащий детали возрастного рейтинга.
+        """
+
         try:
             content_rating_data = find_script("contentRating", self.soup)
         except KeyError:
@@ -99,6 +161,13 @@ class PSClient:
         return content_rating
 
     def __get_info(self) -> Dict[str, Any]:
+        """
+            Получает дополнительную информацию, такую как жанры, языки и описания.
+
+            Возвращает:
+            - Dict[str, Any]: Словарь, содержащий дополнительную информацию.
+        """
+
         info_data = find_script("gameInfo", self.soup)
         if self.product_id[0] == "product":
             info_product = info_data["cache"][self.product_id[1]]
@@ -124,6 +193,11 @@ class PSClient:
         return info
 
     def __load(self) -> None:
+        """
+            Загружает и инициализирует данные из предоставленного URL страницы игры.
+            Вызывает URLError, если предоставлен неверный URL.
+        """
+
         if re.match(r"https://store.playstation.com/\w{2}-\w{2}/concept|https://store.playstation.com/\w{2}-\w{2}/product", self.href):
             self.soup = get_soup(self.href)
             self.product_id = self.__define_product_id(find_script("gameBackgroundImage", self.soup))
@@ -137,6 +211,13 @@ class PSClient:
             raise URLError("Введена неправильная ссылка.")
 
     def data(self) -> Game:
+        """
+            Получает все необходимые данные и возвращает их в виде объекта Game.
+
+            Возвращает:
+            - Game: Объект Game, содержащий полученные данные.
+        """
+
         self.__load()
 
         return Game(
