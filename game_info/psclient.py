@@ -177,9 +177,14 @@ class PSClient:
             return None
 
         if self.product_id[0] == "concept":
-            product_list = [item["__ref"] for item in editions_data["cache"][self.product_id[1]]["products"]]
+            product_list = [
+                item["__ref"]
+                for item in editions_data["cache"][self.product_id[1]]["products"]
+            ]
         else:
-            product_cusa = editions_data["cache"][editions_data["cache"][self.product_id[1]]["concept"]["__ref"]]
+            product_cusa = editions_data["cache"][
+                editions_data["cache"][self.product_id[1]]["concept"]["__ref"]
+            ]
             product_list = [item["__ref"] for item in product_cusa["products"]]
 
         editions = []
@@ -189,15 +194,21 @@ class PSClient:
                 "id": product_data["id"],
                 "category": product_data["topCategory"],
                 "platforms": product_data["platforms"],
-                "image": [(item["role"], item["url"]) for item in product_data["media"]],
+                "image": [
+                    (item["role"], item["url"]) for item in product_data["media"]
+                ],
                 "edition": {
                     "name": product_data["edition"]["name"],
                     "features": product_data["edition"]["features"],
-                    "type": product_data["edition"]["type"]
+                    "type": product_data["edition"]["type"],
                 },
                 "content_rating": product_data["contentRating"]["name"],
-                "genres": [item["value"] for item in product_data["localizedGenres"]] if product_data["localizedGenres"] else None,
-                "name": product_data["name"]
+                "genres": (
+                    [item["value"] for item in product_data["localizedGenres"]]
+                    if product_data["localizedGenres"]
+                    else None
+                ),
+                "name": product_data["name"],
             }
 
             price_list = []
@@ -205,10 +216,7 @@ class PSClient:
             for game in game_cta_list:
                 game_cta = editions_data["cache"][game]
                 del game_cta["price"]["__typename"]
-                price_list.append({
-                    "type": game_cta["type"],
-                    "info": game_cta["price"]
-                })
+                price_list.append({"type": game_cta["type"], "info": game_cta["price"]})
 
             edition["price"] = price_list
 
@@ -223,17 +231,26 @@ class PSClient:
             return None
 
         addons = []
-        addons_list = [item["__ref"] for item in addons_data["cache"]["ROOT_QUERY"][list(addons_data["cache"]["ROOT_QUERY"].keys())[-1]]['addOnProducts']]
+        addons_list = [
+            item["__ref"]
+            for item in addons_data["cache"]["ROOT_QUERY"][
+                list(addons_data["cache"]["ROOT_QUERY"].keys())[-1]
+            ]["addOnProducts"]
+        ]
         for item in addons_list:
             addon_data = addons_data["cache"][item]
             addon = {
                 "id": addon_data["id"],
                 "image": addon_data["boxArt"]["url"],
-                "genres": [item["value"] for item in addon_data["localizedGenres"]] if addon_data["localizedGenres"] else None,
+                "genres": (
+                    [item["value"] for item in addon_data["localizedGenres"]]
+                    if addon_data["localizedGenres"]
+                    else None
+                ),
                 "classification": addon_data["localizedStoreDisplayClassification"],
                 "name": addon_data["name"],
                 "platforms": addon_data["platforms"],
-                "type": addon_data["type"]
+                "type": addon_data["type"],
             }
 
             del addon_data["price"]["__typename"]

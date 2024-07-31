@@ -9,8 +9,12 @@ from selenium.webdriver.chrome.options import Options
 # Настройки для Chrome
 chrome_options = Options()
 chrome_options.add_argument("--headless")  # Запуск в фоновом режиме
-chrome_options.add_argument("--disable-blink-features=AutomationControlled") # Скрыть факт автоматизации
-chrome_options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
+chrome_options.add_argument(
+    "--disable-blink-features=AutomationControlled"
+)  # Скрыть факт автоматизации
+chrome_options.add_argument(
+    "user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+)
 
 
 class FetchError(Exception):
@@ -20,13 +24,13 @@ class FetchError(Exception):
 
 def fetch_url(url: str) -> str:
     """
-        Загружает HTML-код страницы по указанному URL с использованием Selenium.
+    Загружает HTML-код страницы по указанному URL с использованием Selenium.
 
-        Аргументы:
-        url (str): URL-адрес веб-страницы для загрузки.
+    Аргументы:
+    url (str): URL-адрес веб-страницы для загрузки.
 
-        Возвращает:
-        str: HTML-код страницы в виде строки.
+    Возвращает:
+    str: HTML-код страницы в виде строки.
     """
     browser = webdriver.Chrome(options=chrome_options)
     browser.get(url)
