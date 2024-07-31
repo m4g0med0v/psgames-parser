@@ -1,5 +1,5 @@
 from typing import List, Optional, Tuple, Union
-from pydantic import BaseModel, HttpUrl
+from pydantic import BaseModel
 from datetime import datetime
 
 
@@ -13,7 +13,7 @@ class Title(BaseModel):
     edition: Optional[str] = None
     name: str
     platforms: Optional[List[str]] = None
-    publisher: str
+    publisher: Optional[str]
     release: str
     star_rating: Optional[StarRating] = None
     category: Optional[str] = None
@@ -59,7 +59,7 @@ class ContentRating(BaseModel):
 # Info
 class Info(BaseModel):
     genres: Optional[List[str]]
-    publisher: str
+    publisher: Optional[str]
     release: str
     spoken_languages: Optional[List[str]] = None
     screen_languages: Optional[List[str]] = None
@@ -82,7 +82,7 @@ class AddonPrice(BaseModel):
 
 class Addon(BaseModel):
     id: str
-    image: HttpUrl
+    image: str
     genres: Optional[List[str]]
     classification: str
     name: str
@@ -102,9 +102,9 @@ class EditionItem(BaseModel):
     category: str
     platforms: List[str]
     image: List[Tuple[str, str]]
-    edition: Edition
+    edition: Optional[Edition]
     content_rating: str
-    genres: List[str]
+    genres: Optional[List[str]]
     name: str
     price: List[PriceType1]
 
@@ -112,7 +112,6 @@ class EditionItem(BaseModel):
 class Game(BaseModel):
     id: str
     product_id: Tuple[str, str]
-    href: str
     image: List[Tuple[str, str]]
     title: Title
     price: Union[List[PriceType1], List[PriceType2]]
@@ -120,4 +119,4 @@ class Game(BaseModel):
     editions: Optional[List[EditionItem]]
     addons: Optional[List[Addon]]
     info: Info
-    info_date: datetime
+    info_date: str

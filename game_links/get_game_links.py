@@ -24,7 +24,7 @@ def get_game_links(href: str, data_path: Path) -> None:
     while True:
         # Получение html страницы
         html = browser.get(f"{href}{page}")
-        soup = BeautifulSoup(html, "parser.html")
+        soup = BeautifulSoup(html, "html.parser")
 
         # Получаем элементы в которых хранятся ссылки на игры
         games = soup.select('div[id="__next"] > main[id="main"] ul li a')

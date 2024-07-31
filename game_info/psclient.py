@@ -229,11 +229,6 @@ class PSClient:
                 "image": [
                     (item["role"], item["url"]) for item in product_data["media"]
                 ],
-                "edition": {
-                    "name": product_data["edition"]["name"],
-                    "features": product_data["edition"]["features"],
-                    "type": product_data["edition"]["type"],
-                },
                 "content_rating": product_data["contentRating"]["name"],
                 "genres": (
                     [item["value"] for item in product_data["localizedGenres"]]
@@ -242,6 +237,15 @@ class PSClient:
                 ),
                 "name": product_data["name"],
             }
+
+            if product_data.get("edition"):
+                edition["edition"] = {
+                                        "name": product_data["edition"]["name"],
+                                        "features": product_data["edition"]["features"],
+                                        "type": product_data["edition"]["type"],
+                                     }
+            else:
+                edition["edition"] = None
 
             price_list = []
             game_cta_list = [item["__ref"] for item in product_data["webctas"]]
@@ -351,7 +355,7 @@ class PSClient:
         """
 
         self.product_id = self.__define_product_id(
-            find_script("gameBackgroundImage", self.soup)
+            self.__find_script("gameBackgroundImage")
         )
 
         if self.product_id[0] == "concept":
@@ -383,5 +387,5 @@ class PSClient:
             addons=self.__get_addons(),
             editions=self.__get_editions(),
             info=self.__get_info(),
-            info_date=datetime.now(),
+            info_date=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         )
