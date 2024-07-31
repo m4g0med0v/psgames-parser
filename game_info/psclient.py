@@ -1,8 +1,8 @@
 from datetime import datetime
 from typing import Any, Dict, List, Tuple
 
-from soup_utils import get_soup, find_script
-from game_model import Game
+from .soup_utils import get_soup, find_script
+from .game_model import Game
 
 import re
 
@@ -170,6 +170,79 @@ class PSClient:
 
         return content_rating
 
+    def __get_editions(self) -> List:
+        try:
+            editions_data = find_script("upsell", self.soup)
+        except KeyError:
+            return None
+
+        if self.product_id[0] == "concept":
+            product_list = [item["__ref"] for item in editions_data["cache"][self.product_id[1]]["products"]]
+        else:
+            product_cusa = editions_data["cache"][editions_data["cache"][self.product_id[1]]["concept"]["__ref"]]
+            product_list = [item["__ref"] for item in product_cusa["products"]]
+
+        editions = []
+        for product in product_list:
+            product_data = editions_data["cache"][product]
+            edition = {
+                "id": product_data["id"],
+                "category": product_data["topCategory"],
+                "platforms": product_data["platforms"],
+                "image": [(item["role"], item["url"]) for item in product_data["media"]],
+                "edition": {
+                    "name": product_data["edition"]["name"],
+                    "features": product_data["edition"]["features"],
+                    "type": product_data["edition"]["type"]
+                },
+                "content_rating": product_data["contentRating"]["name"],
+                "genres": [item["value"] for item in product_data["localizedGenres"]] if product_data["localizedGenres"] else None,
+                "name": product_data["name"]
+            }
+
+            price_list = []
+            game_cta_list = [item["__ref"] for item in product_data["webctas"]]
+            for game in game_cta_list:
+                game_cta = editions_data["cache"][game]
+                del game_cta["price"]["__typename"]
+                price_list.append({
+                    "type": game_cta["type"],
+                    "info": game_cta["price"]
+                })
+
+            edition["price"] = price_list
+
+            editions.append(edition)
+
+        return editions
+
+    def __get_addons(self):
+        try:
+            addons_data = find_script("addOns", self.soup)
+        except KeyError:
+            return None
+
+        addons = []
+        addons_list = [item["__ref"] for item in addons_data["cache"]["ROOT_QUERY"][list(addons_data["cache"]["ROOT_QUERY"].keys())[-1]]['addOnProducts']]
+        for item in addons_list:
+            addon_data = addons_data["cache"][item]
+            addon = {
+                "id": addon_data["id"],
+                "image": addon_data["boxArt"]["url"],
+                "genres": [item["value"] for item in addon_data["localizedGenres"]] if addon_data["localizedGenres"] else None,
+                "classification": addon_data["localizedStoreDisplayClassification"],
+                "name": addon_data["name"],
+                "platforms": addon_data["platforms"],
+                "type": addon_data["type"]
+            }
+
+            del addon_data["price"]["__typename"]
+            addon["price"] = addon_data["price"]
+
+            addons.append(addon)
+
+        return addons
+
     def __get_info(self) -> Dict[str, Any]:
         """
         Получает дополнительную информацию, такую как жанры, языки и описания.
@@ -267,6 +340,8 @@ class PSClient:
             title=self.__get_title(),
             price=self.__get_price(),
             content_rating=self.__get_content_rating(),
+            addons=self.__get_addons(),
+            editions=self.__get_editions(),
             info=self.__get_info(),
             info_date=datetime.now(),
         )

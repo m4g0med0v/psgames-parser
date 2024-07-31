@@ -1,5 +1,5 @@
 from typing import List, Optional, Tuple, Union
-from pydantic import BaseModel
+from pydantic import BaseModel, HttpUrl
 from datetime import datetime
 
 
@@ -21,22 +21,22 @@ class Title(BaseModel):
 
 # Price
 class PriceInfo(BaseModel):
-    basePrice: str
-    discountedPrice: str
+    basePrice: Optional[str]
+    discountedPrice: Optional[str]
     discountText: Optional[str]
-    serviceBranding: List[str]
+    serviceBranding: Optional[List[str]]
     endTime: Optional[str]
     upsellText: Optional[str]
-    basePriceValue: int
-    discountedValue: int
-    currencyCode: str
-    qualifications: Union[List[str], List]
-    applicability: str
+    basePriceValue: Optional[int]
+    discountedValue: Optional[int]
+    currencyCode: Optional[str]
+    qualifications: Optional[Union[List[str], List]]
+    applicability: Optional[str]
     campaignId: Optional[str]
-    rewardId: str
-    isFree: bool
-    isExclusive: bool
-    isTiedToSubscription: bool
+    rewardId: Optional[str]
+    isFree: Optional[bool]
+    isExclusive: Optional[bool]
+    isTiedToSubscription: Optional[bool]
 
 
 class PriceType1(BaseModel):
@@ -68,6 +68,47 @@ class Info(BaseModel):
     type: Optional[str] = None
 
 
+class AddonPrice(BaseModel):
+    discountedPrice: Optional[str]
+    discountText: Optional[str]
+    isExclusive: Optional[bool]
+    upsellText: Optional[str]
+    upsellServiceBranding: Optional[List[str]]
+    serviceBranding: Optional[List[str]]
+    basePrice: Optional[str]
+    isFree: Optional[bool]
+    isTiedToSubscription: Optional[bool]
+
+
+class Addon(BaseModel):
+    id: str
+    image: HttpUrl
+    genres: Optional[List[str]]
+    classification: str
+    name: str
+    platforms: List[str]
+    type: str
+    price: AddonPrice
+
+
+class Edition(BaseModel):
+    name: Optional[str]
+    features: List[str]
+    type: Optional[str]
+
+
+class EditionItem(BaseModel):
+    id: str
+    category: str
+    platforms: List[str]
+    image: List[Tuple[str, str]]
+    edition: Edition
+    content_rating: str
+    genres: List[str]
+    name: str
+    price: List[PriceType1]
+
+
 class Game(BaseModel):
     id: str
     product_id: Tuple[str, str]
@@ -76,5 +117,7 @@ class Game(BaseModel):
     title: Title
     price: Union[List[PriceType1], List[PriceType2]]
     content_rating: Optional[ContentRating]
+    editions: Optional[List[EditionItem]]
+    addons: Optional[List[Addon]]
     info: Info
     info_date: datetime

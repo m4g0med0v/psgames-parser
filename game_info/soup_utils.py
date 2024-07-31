@@ -1,6 +1,6 @@
 from bs4 import BeautifulSoup
 
-from fetch_utils import fetch_url
+from .fetch_utils import fetch_url
 
 import json
 

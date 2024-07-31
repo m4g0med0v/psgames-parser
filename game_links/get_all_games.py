@@ -1,5 +1,5 @@
 from configs import configure_logging
-from game_links import get_game_links
+from .get_game_links import get_game_links
 
 from pathlib import Path
 from time import time
