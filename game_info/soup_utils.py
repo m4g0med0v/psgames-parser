@@ -49,7 +49,9 @@ def find_script(data_name: str, soup: BeautifulSoup) -> dict:
     # Получение script с идентификатором, указанным в data-initial
     script_id = div.get("data-initial")
     if script_id is None:
-        raise KeyError(f"Div with data-mfe-name='{data_name}' does not have 'data-initial' attribute.")
+        raise KeyError(
+            f"Div with data-mfe-name='{data_name}' does not have 'data-initial' attribute."
+        )
 
     script = soup.find("script", {"id": script_id})
     if script is None:

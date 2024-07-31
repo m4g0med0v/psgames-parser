@@ -1,9 +1,14 @@
 from fake_useragent import UserAgent
+from configs import configure_logging
 from time import sleep
 
 import requests
 import logging
 import random
+
+
+log = logging.getLogger(__name__)
+configure_logging()
 
 
 class FetchError(Exception):
@@ -23,7 +28,7 @@ def fetch_url(url: str, delay_interval: int = 3) -> str:
 
     Args:
         url (str): URL страницы, которую нужно загрузить.
-        delay_interval (int, optional): Интервал задержки в секундах 
+        delay_interval (int, optional): Интервал задержки в секундах
             перед повторной попыткой при получении статуса 429. По умолчанию 3.
 
     Returns:
@@ -37,18 +42,22 @@ def fetch_url(url: str, delay_interval: int = 3) -> str:
     headers = {
         "Accept": st_accept,
         "User-Agent": st_useragent,
-        'Referer': 'https://www.google.com/'
+        "Referer": "https://www.google.com/",
     }
 
     response = requests.get(url, headers=headers)
 
     if response.status_code == 429:
-        print(f"FetchError: {response.status_code}. Вы отправили слишком много запросов за определенное время.")
-        print(f"Sleep: {delay_interval}sec")
+        log.warning(
+            f"FetchError: {response.status_code}. Вы отправили слишком много запросов за определенное время."
+        )
+        log.info(f"Sleep: {delay_interval}sec")
         sleep(delay_interval)
         return fetch_url(url)
     elif response.status_code != 200:
-        raise FetchError(f"Error: {response.status_code}. Try a different proxy or user-agent")
+        raise FetchError(
+            f"Error: {response.status_code}. Try a different proxy or user-agent"
+        )
 
     sleep_time = random.uniform(1, 3)
     sleep(sleep_time)
