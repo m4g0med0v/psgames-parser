@@ -1,6 +1,7 @@
-from game_info import get_soup
 from configs import configure_logging
+from fetch_utils import Fetch
 
+from bs4 import BeautifulSoup
 from pathlib import Path
 
 import logging
@@ -13,20 +14,21 @@ configure_logging()
 
 def get_game_links(href: str, data_path: Path) -> None:
     ans = []
+    browser = Fetch()
+
+    # Открываем брузер
+    browser.open()
 
     # Цикл для прохода по всем страницам ссылки
     page = 1
     while True:
         # Получение html страницы
-        soup = get_soup(f"{href}{page}")
+        html = browser.get(f"{href}{page}")
+        soup = BeautifulSoup(html, "parser.html")
 
         # Получаем элементы в которых хранятся ссылки на игры
         games = soup.select('div[id="__next"] > main[id="main"] ul li a')
-        # div[id="__next"] > main[id="main"] ul li a div[data-qa^="ems-sdk-grid#productTile"] > section
-        # type (none) div[id="__next"] > main[id="main"] ul li a div[data-qa^="ems-sdk-grid#productTile"] > section > span[data-qa$="product-type"]
-        # discount-badge (none) div[id="__next"] > main[id="main"] ul li a div[data-qa^="ems-sdk-grid#productTile"] > section  span[data-qa$="discount-badge#text"]
-        # display-price div[id="__next"] > main[id="main"] ul li a div[data-qa^="ems-sdk-grid#productTile"] > section  > div[data-qa$="price"] span[data-qa$="#price#display-price"]
-        # discount-price div[id="__next"] > main[id="main"] ul li a div[data-qa^="ems-sdk-grid#productTile"] > section  > div[data-qa$="price"] s[data-qa$="#price#price-strikethrough"]
+
         # Если на странице нет игр цикл заканчивается
         if not games:
             break
@@ -44,6 +46,9 @@ def get_game_links(href: str, data_path: Path) -> None:
 
         log.info(f"Page: {page}")
         page += 1
+
+    # Закрываем браузер
+    browser.close()
 
     # Запись полученных ссылок игр в файл
     with open(data_path.absolute(), "w") as file:

@@ -1,18 +1,14 @@
 from datetime import datetime
 from typing import Any, Dict, List, Tuple
+from bs4 import BeautifulSoup
 
-from .soup_utils import get_soup, find_script
 from .game_model import Game
 
-import re
-
-
-class URLError(Exception):
-    pass
+import json
 
 
 class PSClient:
-    def __init__(self, href: str, id: str = None) -> None:
+    def __init__(self, soup: BeautifulSoup) -> None:
         """
         Класс PSClient для получения и парсинга данных о играх из магазина PlayStation.
 
@@ -37,10 +33,46 @@ class PSClient:
         - data(): Получает все необходимые данные и возвращает их в виде объекта Game.
         """
 
-        self.href = href
-        self.id = id
-        self.soup = None
+        self.id = None
+        self.soup = soup
         self.product_id = None
+
+    def __find_script(self, data_name: str) -> dict:
+        """
+        Находит и извлекает JSON данные из script-тега в HTML-документе.
+
+        Находит div с указанным значением атрибута data-mfe-name, затем находит script-тег
+        с идентификатором, указанным в атрибуте data-initial этого div, и извлекает из него JSON данные.
+
+        Args:
+            data_name (str): Значение атрибута data-mfe-name для поиска div.
+            soup (BeautifulSoup): Объект BeautifulSoup, представляющий HTML-документ.
+
+        Returns:
+            dict: Извлеченные JSON данные.
+
+        Raises:
+            KeyError: Если div или script не найдены, или отсутствует нужный атрибут.
+            json.JSONDecodeError: Если содержимое script не является допустимым JSON.
+        """
+        # Получение div с указанным data-mfe-name
+        div = self.soup.find("div", {"data-mfe-name": data_name})
+        if div is None:
+            raise KeyError(f"Div with data-mfe-name='{data_name}' not found.")
+
+        # Получение script с идентификатором, указанным в data-initial
+        script_id = div.get("data-initial")
+        if script_id is None:
+            raise KeyError(
+                f"Div with data-mfe-name='{data_name}' does not have 'data-initial' attribute."
+            )
+
+        script = self.soup.find("script", {"id": script_id})
+        if script is None:
+            raise KeyError(f"Script with id='{script_id}' not found.")
+
+        # Извлечение и возврат JSON данных
+        return json.loads(script.text)
 
     def __define_product_id(self, data) -> str:
         """
@@ -74,7 +106,7 @@ class PSClient:
         - List[Tuple]: Список кортежей, содержащих роль изображения и URL.
         """
 
-        image_data = find_script("gameBackgroundImage", self.soup)
+        image_data = self.__find_script("gameBackgroundImage")
         image = [
             (item["role"], item["url"])
             for item in image_data["cache"][self.product_id[1]]["media"]
@@ -90,7 +122,7 @@ class PSClient:
         - Dict[str, Any]: Словарь, содержащий детали названия.
         """
 
-        title_data = find_script("gameTitle", self.soup)
+        title_data = self.__find_script("gameTitle")
         if self.product_id[0] == "product":
             title_product = title_data["cache"][self.product_id[1]]
             title = {
@@ -127,7 +159,7 @@ class PSClient:
         - List: Список деталей о ценах.
         """
 
-        price_data = find_script("ctaWithPrice", self.soup)
+        price_data = self.__find_script("ctaWithPrice")
         price = []
         if self.product_id[0] == "product":
             price_product = price_data["cache"][self.product_id[1]]
@@ -154,7 +186,7 @@ class PSClient:
         """
 
         try:
-            content_rating_data = find_script("contentRating", self.soup)
+            content_rating_data = self.__find_script("contentRating")
         except KeyError:
             return None
 
@@ -172,7 +204,7 @@ class PSClient:
 
     def __get_editions(self) -> List:
         try:
-            editions_data = find_script("upsell", self.soup)
+            editions_data = self.__find_script("upsell")
         except KeyError:
             return None
 
@@ -226,7 +258,7 @@ class PSClient:
 
     def __get_addons(self):
         try:
-            addons_data = find_script("addOns", self.soup)
+            addons_data = self.__find_script("addOns")
         except KeyError:
             return None
 
@@ -268,7 +300,7 @@ class PSClient:
         - Dict[str, Any]: Словарь, содержащий дополнительную информацию.
         """
 
-        info_data = find_script("gameInfo", self.soup)
+        info_data = self.__find_script("gameInfo")
         if self.product_id[0] == "product":
             info_product = info_data["cache"][self.product_id[1]]
             info = {
@@ -318,26 +350,18 @@ class PSClient:
         Вызывает URLError, если предоставлен неверный URL.
         """
 
-        if re.match(
-            r"https://store.playstation.com/\w{2}-\w{2}/concept|https://store.playstation.com/\w{2}-\w{2}/product",
-            self.href,
-        ):
-            self.soup = get_soup(self.href)
-            self.product_id = self.__define_product_id(
-                find_script("gameBackgroundImage", self.soup)
-            )
+        self.product_id = self.__define_product_id(
+            find_script("gameBackgroundImage", self.soup)
+        )
 
-            if not self.id:
-                if "concept" in self.href:
-                    self.id = self.href.replace(
-                        "https://store.playstation.com/en-us/concept/", ""
-                    )
-                else:
-                    self.id = self.href.replace(
-                        "https://store.playstation.com/en-us/product/", ""
-                    )
+        if self.product_id[0] == "concept":
+            self.id = self.product_id[1].replace(
+                "Concept", ""
+            )
         else:
-            raise URLError("Введена неправильная ссылка.")
+            self.id = self.product_id[1].replace(
+                "Product:", ""
+            )
 
     def data(self) -> Game:
         """
@@ -352,7 +376,6 @@ class PSClient:
         return Game(
             id=self.id,
             product_id=self.product_id,
-            href=self.href,
             image=self.__get_image(),
             title=self.__get_title(),
             price=self.__get_price(),
