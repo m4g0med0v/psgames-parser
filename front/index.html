@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+
+    </style>
+</head>
+<body>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            fetch('http://127.0.0.1:8000/games')
+                .then((response) => {
+                    return response.json();
+                })
+                .then((data) => {
+                    for (let game of data) {
+                        let divGame = document.createElement('div') 
+                        divGame.className = "game"
+                        divGame.dataset.id = `${game["id"]}`
+                        let divImage = document.createElement('img')
+                        divImage.src = `${game["image"]}`
+                        divImage.alt = "game image"
+                        divGame.appendChild(divImage)
+                        let divP = document.createElement('p')
+                        divP.textContent = `${game["name"]}`
+                        divGame.appendChild(divP)
+                        divGame.addEventListener("click", function() {
+
+                        })
+                        document.body.appendChild(divGame)
+                    }
+                });
+
+        })
+    </script>    
+</body>
+</html>

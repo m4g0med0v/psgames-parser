@@ -41,6 +41,7 @@ def get_game_links(href: str, data_path: Path) -> None:
                     "id": data_json["id"],
                     "name": data_json["name"],
                     "url": f"https://store.playstation.com{item["href"]}",
+                    "image": soup.select_one(f'div[id="__next"] > main[id="main"] ul li a img[data-qa$="#productTile{data_json["index"]}#game-art#image#image"]')["src"][:-6]
                 }
             )
 
