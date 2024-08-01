@@ -6,7 +6,7 @@ from datetime import datetime
 # Title
 class StarRating(BaseModel):
     rating: Optional[float]
-    count: Optional[int]
+    count: Optional[Union[int, str]]
 
 
 class Title(BaseModel):
@@ -14,7 +14,7 @@ class Title(BaseModel):
     name: str
     platforms: Optional[List[str]] = None
     publisher: Optional[str]
-    release: str
+    release: Optional[str]
     star_rating: Optional[StarRating] = None
     category: Optional[str] = None
 
@@ -112,7 +112,7 @@ class EditionItem(BaseModel):
 class Game(BaseModel):
     id: str
     product_id: Tuple[str, str]
-    image: List[Tuple[str, str]]
+    image: Union[List[Tuple[str, str]], str]
     title: Title
     price: Union[List[PriceType1], List[PriceType2]]
     content_rating: Optional[ContentRating]

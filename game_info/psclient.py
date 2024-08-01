@@ -106,11 +106,16 @@ class PSClient:
         - List[Tuple]: Список кортежей, содержащих роль изображения и URL.
         """
 
-        image_data = self.__find_script("gameBackgroundImage")
+        try:
+            image_data = self.__find_script("gameBackgroundImage")
+        except KeyError:
+            image = self.soup.select_one('div.media-block__inner picture.media-block__img source')
+            return image['srcset']
+
         image = [
-            (item["role"], item["url"])
-            for item in image_data["cache"][self.product_id[1]]["media"]
-        ]
+                (item["role"], item["url"])
+                for item in image_data["cache"][self.product_id[1]]["media"]
+            ]
 
         return image
 
@@ -121,8 +126,20 @@ class PSClient:
         Возвращает:
         - Dict[str, Any]: Словарь, содержащий детали названия.
         """
+        try:
+            title_data = self.__find_script("gameTitle")
+        except KeyError:
+            title = {
+                "name": self.soup.select_one('div.box.game-hero__title-content h1.game-title').text,
+                "publisher": self.soup.select_one('div.box.game-hero__title-content div.publisher').text,
+                "release": self.soup.select_one('div.pricing-group div.release-date').text,
+                "star_rating": {
+                    "rating": self.soup.select_one('div.rating div.rating__number').text,
+                    "count": self.soup.select_one('div.rating div.rating__count').text,
+                },
+            }
+            return title
 
-        title_data = self.__find_script("gameTitle")
         if self.product_id[0] == "product":
             title_product = title_data["cache"][self.product_id[1]]
             title = {
@@ -355,7 +372,7 @@ class PSClient:
         """
 
         self.product_id = self.__define_product_id(
-            self.__find_script("gameBackgroundImage")
+            self.__find_script("ctaWithPrice")
         )
 
         if self.product_id[0] == "concept":
