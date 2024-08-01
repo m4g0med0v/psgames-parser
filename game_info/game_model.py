@@ -88,7 +88,7 @@ class Addon(BaseModel):
     name: str
     platforms: List[str]
     type: str
-    price: AddonPrice
+    price: Optional[AddonPrice]
 
 
 class Edition(BaseModel):
@@ -103,7 +103,7 @@ class EditionItem(BaseModel):
     platforms: List[str]
     image: List[Tuple[str, str]]
     edition: Optional[Edition]
-    content_rating: str
+    content_rating: Optional[str]
     genres: Optional[List[str]]
     name: str
     price: List[PriceType1]

@@ -246,7 +246,7 @@ class PSClient:
                 "image": [
                     (item["role"], item["url"]) for item in product_data["media"]
                 ],
-                "content_rating": product_data["contentRating"]["name"],
+                "content_rating": product_data["contentRating"]["name"] if product_data.get("contentRating") else None,
                 "genres": (
                     [item["value"] for item in product_data["localizedGenres"]]
                     if product_data["localizedGenres"]
@@ -306,8 +306,11 @@ class PSClient:
                 "type": addon_data["type"],
             }
 
-            del addon_data["price"]["__typename"]
-            addon["price"] = addon_data["price"]
+            if addon_data.get("price"):
+                del addon_data["price"]["__typename"]
+                addon["price"] = addon_data["price"]
+            else:
+                addon["price"] = None
 
             addons.append(addon)
 
